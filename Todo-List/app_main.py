@@ -1,8 +1,12 @@
+from ast import arg
+import sys
+args = sys.argv
+
+
 def print_help():
     help = """
     Command Line Todo application
     =============================
-
     Command line arguments:
         -l   Lists all the tasks
         -a   Adds a new task
@@ -11,66 +15,82 @@ def print_help():
     """
     print(help)
 
-print_help()
-
 def handl_l(data):
-    i = 1
-    with open("data.txt", "r+") as f:
-        f.seek(0)
-        if f.read() == "":
-            print("No todos for today!")
-        else:
-            for line in data:
+    if len(data) == 0:
+        print('No todos for today!')
+    else:
+        i = 1
+        for line in data:
+            if len(line) > 1:
                 print(f'{i}. {line}')
                 i += 1
 
-
 def handl_a(data, item):
-    if item == "":
-        print('Unable to add task: no task provided')
+    data = [line for line in data if len(line) > 1]
+    file = open('data.txt', 'a')
+    if len(data) > 0:  
+        file.write('\n' + '[ ] ' + item)
     else:
-        data.append(item)
-        file = open('data.txt', 'a')
-        file.write('\n' + item)
-        file.close()
+        file.write('[ ] ' + item)
+    file.close()
+    data.append(item.strip())
+
+
+def handl_r(data, index):
+    data = [line for line in data if len(line) > 1]
+    print(data)
+    data.pop(index)
+    with open('data.txt', 'w') as file:
+        file.write('')
+    file = open('data.txt', 'a')
+    for line in data:
+        file.write(line + '\n')
+    file.close()
     return data
 
-def handl_r(r_task):
-    if r_task == "":
-        print('Unable to remove: no index provided')
-    else:
-        with open("data.txt", "r") as f:
-            lines = f.readlines()
-        with open("data.txt", "w") as f:
-            for line in lines:
-                if line.strip("\n") != r_task:
-                    f.write(line)
+def handl_c(data, index):
+    data[index] = '[x] ' + data[index][4:]
+    print(data)
+    with open('data.txt', 'w') as file:
+        file.write('')
+    file = open('data.txt', 'a')
+    for line in data:
+        file.write(line + '\n')
+    file.close()
+    return data
 
-# def handl_c():
+if len(args) == 1:
+    print_help()
 
+else: 
+    choice = args[1]
+    data = []
+    with open('data.txt') as file:
+        for line in file:
+            data.append(line.strip())
 
-
-while True:
-    choice = input('Please choose a command: ')
-    if len(choice) == 1 or len(choice) > 2:
-        print_help()
-    else:
-        data = []
-        with open('data.txt') as file:
-            for line in file:
-                data.append(line.strip())
-    if choice == '-l':
+    if choice == '-l' and len(args) == 2:
         handl_l(data)
     elif choice == '-a':
-        item = input('Enter a task: ')
-        data = handl_a(data, item)
+        if len(args) != 3:
+            print('Unable to add: no task provided')
+        else:
+            item = args[2]
+            handl_a(data, item)
     elif choice == '-r':
-        r_task = input('Enter the task to be removed: ')
-        handl_r(r_task)
-    # elif choice == '-c':
-
+        if len(args) != 3:
+            print('Unable to remove: no index provided')
+        else:
+            if not(args[2].isnumeric()): 
+                print('Unable to remove: index is not a number') 
+            elif int(args[2]) > len(data):
+                print('Unable to remove: index is out of bound')
+            else:
+                indx_to_remove = int(args[2]) - 1
+                data = handl_r(data, indx_to_remove)
+    elif choice == '-c':
+        indx_to_check = int(args[2]) - 1
+        data = handl_c(data, indx_to_check)
     else:
-        print('Invalid argument')
+        print('Unsupported argument')
         print_help()
-
-
